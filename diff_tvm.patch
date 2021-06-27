@@ -1,0 +1,35 @@
+diff --git a/python/tvm/contrib/emcc.py b/python/tvm/contrib/emcc.py
+index 89431dc2a..27028602c 100644
+--- a/python/tvm/contrib/emcc.py
++++ b/python/tvm/contrib/emcc.py
+@@ -46,6 +46,7 @@ def create_tvmjs_wasm(output, objects, options=None, cc="emcc"):
+     cmd += ["-s", "ERROR_ON_UNDEFINED_SYMBOLS=0"]
+     cmd += ["-s", "STANDALONE_WASM=1"]
+     cmd += ["-s", "ALLOW_MEMORY_GROWTH=1"]
++    cmd += ["-s", "TOTAL_MEMORY=33554432"]
+ 
+     objects = [objects] if isinstance(objects, str) else objects
+ 
+diff --git a/python/tvm/relay/frontend/pytorch.py b/python/tvm/relay/frontend/pytorch.py
+index b5cfcf5e3..a3dad3f94 100644
+--- a/python/tvm/relay/frontend/pytorch.py
++++ b/python/tvm/relay/frontend/pytorch.py
+@@ -2305,9 +2305,18 @@ class PyTorchOpConverter:
+             unique_sliced = _op.strided_slice(unique, begin=[0], end=num_uniq, slice_mode="size")
+             return (unique_sliced, indices)
+ 
++    def square(self, inputs, input_types):
++        data = inputs[0]
++        dtype = input_types[0]
++        exponent = _expr.const(2.0, dtype=dtype)
++        return _op.power(data, exponent)
++
+     # Operator mappings
+     def create_convert_map(self):
+         self.convert_map = {
++            "aten::square": self.square,
++            "profiler::_record_function_enter": self.none,
++            "profiler::_record_function_exit": self.none,
+             "aten::is_floating_point": self.is_floating_point,
+             "aten::pixel_shuffle": self.pixel_shuffle,
+             "aten::device": self.none,

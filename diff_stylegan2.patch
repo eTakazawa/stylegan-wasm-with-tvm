@@ -1,0 +1,49 @@
+diff --git a/torch_utils/ops/upfirdn2d.py b/torch_utils/ops/upfirdn2d.py
+index ceeac2b..c6f5a53 100755
+--- a/torch_utils/ops/upfirdn2d.py
++++ b/torch_utils/ops/upfirdn2d.py
+@@ -165,6 +165,21 @@ def upfirdn2d(x, f, up=1, down=1, padding=0, flip_filter=False, gain=1, impl='cu
+ 
+ #----------------------------------------------------------------------------
+ 
++def flip_by_slice_0_1(x):
++    x = torch.stack((x[3,:], x[2,:], x[1,:], x[0,:]))
++    x = torch.stack((x[3,:], x[2,:], x[1,:], x[0,:]), dim=1)
++    return x
++    # aten::copy_ is not implmented
++    # y = torch.zeros(x.shape)
++    # n0 = x.shape[0]
++    # n1 = x.shape[1]
++    # for i in range(n0):
++    #     for j in range(n1):
++    #         y[i,j] = x[n0-i-1,j]
++    # for i in range(n1):
++    #     for j in range(n0):
++    #         y[j,i] = x[j,n1-i-1]
++
+ @misc.profiled_function
+ def _upfirdn2d_ref(x, f, up=1, down=1, padding=0, flip_filter=False, gain=1):
+     """Slow reference implementation of `upfirdn2d()` using standard PyTorch ops.
+@@ -193,7 +208,8 @@ def _upfirdn2d_ref(x, f, up=1, down=1, padding=0, flip_filter=False, gain=1):
+     f = f * (gain ** (f.ndim / 2))
+     f = f.to(x.dtype)
+     if not flip_filter:
+-        f = f.flip(list(range(f.ndim)))
++        # f = f.flip(list(range(f.ndim)))
++        f = flip_by_slice_0_1(f)
+ 
+     # Convolve with the filter.
+     f = f[np.newaxis, np.newaxis].repeat([num_channels, 1] + [1] * f.ndim)
+diff --git a/training/networks.py b/training/networks.py
+index b046eba..5bbc150 100755
+--- a/training/networks.py
++++ b/training/networks.py
+@@ -283,7 +283,7 @@ class SynthesisLayer(torch.nn.Module):
+             self.noise_strength = torch.nn.Parameter(torch.zeros([]))
+         self.bias = torch.nn.Parameter(torch.zeros([out_channels]))
+ 
+-    def forward(self, x, w, noise_mode='random', fused_modconv=True, gain=1):
++    def forward(self, x, w, noise_mode='const', fused_modconv=True, gain=1):
+         assert noise_mode in ['random', 'const', 'none']
+         in_resolution = self.resolution // self.up
+         misc.assert_shape(x, [None, self.weight.shape[1], in_resolution, in_resolution])

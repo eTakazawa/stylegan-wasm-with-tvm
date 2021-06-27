@@ -1,0 +1,20 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <canvas id="mycanvas" width="512px" height="512px"></canvas>
+    <script src="bundle.js"></script>
+    <script type="text/javascript">
+    bundle.Run(bundle.getRandomArray(512)).then(result => {
+      let result_normalized = bundle.transformForCanvasImage(result);
+      let canvas = document.getElementById('mycanvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      let ctx = document.getElementById('mycanvas').getContext('2d');
+      let img = ctx.createImageData(512, 512);
+      img.data.set(result_normalized);
+      ctx.putImageData(img, 0, 0);
+    });
+    </script>
+  </body>
+</html>
