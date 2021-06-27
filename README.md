@@ -1,4 +1,6 @@
 # Run StyleGAN2-ada on Web with TVM
+- ブラウザ上でStyleGAN2を実行し，猫の画像を生成する
+
 ## Setup (TVM)
 - TVMのリポジトリをclone
   - 0b2f30aef2 のcommitでテストしました（@TODO submodule）
@@ -98,7 +100,7 @@ python3 deploy_model.py
 ```
 cp stylegan.wasm stylegan.params stylegan.json /workspace/tvm/web
 cd /workspace/stylegan-wasm-with-tvm
-cp load_stylegan.js index.html /workspace/tvm/web
+cp load_stylegan.js /workspace/tvm/web
 cd /workspace/tvm/web
 ```
 - ブラウザで動く形に変換
@@ -107,7 +109,8 @@ cd /workspace/tvm/web
 ```
 browserify -t brfs load_stylegan.js -s bundle > bundle.js
 ```
-- `tvm/web/index.html` を開いて数分待つ
+- `index.html` と `bundle.js` をローカルにダウンロードしてくる
+- `index.html` をブラウザで開いて数分待つと猫の画像が表示される
   - デベロッパーツールからコンソールを確認すると，処理時間等が出力されている
 
 ---
